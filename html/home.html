@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <meta charset="utf-8">
+    <title>Traffic Prediction</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="author" content="">
+<!--  -->
+<style>
+
+body {
+  font-size: 11px sans-serif;
+  background-image:url("static/css/crossword.png");
+
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+	font-size: 10px;
+	}
+
+.x.axis path {
+  display: none;
+}
+
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.75px;
+
+}
+
+.dot {
+  stroke: #000;
+}
+
+.grid .tick {
+    stroke: lightgrey;
+    opacity: 0.3;
+}
+.grid path {
+      stroke-width: 0;
+}
+
+body {
+	padding-top: 50px; /* 60px to make the container go all the way to the bottom of the topbar */
+	
+  }
+  
+ body p {
+	text-align: justify;
+	-webkit-hyphens: auto;
+	-moz-hyphens: auto;
+	-ms-hyphens: auto;
+	 hyphens: auto;
+}
+.row {
+	padding: 2px 5px;
+	margin-bottom: 5px;
+	margin-top: 2px;
+	background-color: #f9f9f9;
+/* 	background-color: #fbfbfb; */
+/* 	border: 1px solid #e1e1e8; */
+	border-radius: 4px;
+/* 	height: 250px; */
+	height: 25%; max-height: 250px; 
+  }
+  
+.rowx {
+padding: 2px 5px;
+margin-bottom: 5px;
+margin-top: 2px;
+/* background-color: #f7f7h8; */
+	background-color: #fbfbfb;
+/* 	border: 1px solid #e1e1e8; */
+border-radius: 4px;
+height: 850px;
+/* width:1169px !important; */
+
+}
+
+.rowz {
+padding: 2px 5px;
+margin-bottom: 5px;
+margin-top: 2px;
+margin-right:20px;
+/* background-color: #f7f7h8; */
+background-color: #fbfbfb;
+/* 	border: 1px solid #e1e1e8; */
+border-radius: 4px;
+height: 350px;
+/* height: 100px !important; */
+/* overflow: scroll; */
+/* width:1169px !important; */
+
+
+}
+
+
+
+.header {
+	margin-top: 10px;
+	padding: 10px 10px;
+/* 	display: block; */
+	height: 10px;
+	width: 100%;
+
+	background-color: #005ea5
+	}
+	
+.container {
+	
+	margin-left: 2px;
+	}
+	
+h2 .btn-group { display: inline-block; }
+
+.navbar-btn {margin-top: 5px !important;
+			 margin-right: 5px !important}
+
+hr {
+	display: block;
+	line-height: 20px;
+	}
+			 
+
+br {
+   display: block;
+   margin: 10px 100px;
+   line-height: 20px;
+}
+
+  
+@media (max-width: 768px) {
+  .btn-responsive {
+    padding:2px 4px;
+    font-size:80%;
+    line-height: 1;
+    border-radius:3px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 992px) {
+  .btn-responsive {
+    padding:4px 9px;
+    font-size:90%;
+    line-height: 1.2;
+  }
+}
+
+rect.bordered {
+        stroke: #E6E6E6;
+        stroke-width:0px;   
+      }
+
+text.mono {
+font-size: 9pt;
+font-family: Consolas, courier;
+fill: #aaa;
+}
+
+text.axis-workweek {
+fill: #000;
+}
+
+text.axis-worktime {
+fill: #000;
+}
+
+text.text-hover {
+        fill: #00C;
+      }
+
+rect.cell-hover {
+        stroke: grey;
+        stroke-width:0.5px;   
+      }
+
+
+      text.text-highlight {
+        fill: #c00;
+      }
+      text.text-hover {
+        fill: #00C;
+      }
+
+html, body { padding: 0; margin: 0; height: 100%; }
+
+
+</style>
+
+<link rel="stylesheet" href="{{url_for('static', filename='css/bootstrap.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/charts.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/dc.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/starter-template.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/d3_tip.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/govuk_template.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/dropdowns-enhancement.css') }}" media="screen" />
+<link rel="stylesheet" href="{{url_for('static', filename='css/docs.min.css') }}" media="screen" />
+
+
+</head>
+
+<body>
+
+  <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="#">GOV.UK Traffic</a> 
+          </div>
+<!--           <a class="navbar-brand pull-right" href="https://gds.blog.gov.uk/">GDS</a> -->
+          <div class="collapse navbar-collapse">
+            <ul class="nav navbar-nav">
+              <li class="active"><a href="/">Home</a></li>
+              <li><a href="about">About</a></li>
+              <li><a href="contact">Contact</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+<!-- /////////////////////////////////////////////////////////////////////////// -->
+<div id="global-header-bar">
+<!--       <div class="inner-block"> -->
+        <div class="header"></div>
+      </div>
+    </div> 
+
+
+<div class="container">
+<div>
+<h2>GOV.UK Traffic Model <span style="color:#bdbdbd"><code>(updated hourly)</code></span> 
+
+<div class="btn-group" id="btn_group_1" data-toggle="buttons-radio">
+    <small>
+    <button type="button" class="btn btn-default navbar-btn active" id="RF" name="ornamental_only" value="yes">Random Forest</button>
+    <button type="button" class="btn btn-default navbar-btn" id="NN" name="ornamental_only" value="no">Neural Net</button>
+	<button type="button" class="btn btn-default navbar-btn" id="LR" name="ornamental_only" value="no">Linear</button>
+
+	</small>
+</div>
+
+<div class="btn-group" id="btn_group_2" data-toggle="buttons-radio">
+
+<!-- 
+<small>
+    <button type="button" id="Sdays" class="btn btn-default navbar-btn pull-right" data-toggle="buttons-radio" onclick="$(this).addClass('active'); myFunc()">7 Days</button>    
+	<button type="button" id="Tdays" class="btn btn-default navbar-btn pull-right" data-toggle="buttons-radio" onclick="$(this).addClass('active'); myFunc()">2 Days</button>    
+</small>
+ -->
+	<small>
+    <button type="button" class="btn btn-default navbar-btn active" id="SD" name="ornamental_only" value="yes">7 Days</button>
+    <button type="button" class="btn btn-default navbar-btn" id="TD" name="ornamental_only" value="no">2 Days</button>
+	</small>
+
+
+</div>
+</h2>        
+</div>
+<!-- 
+<p>
+This is a test page for anomaly detection algorithms. 
+</p>
+ -->
+<!--   -->
+<div class="row">
+<div class="col-md-12" id="TS">
+</div>
+</div>
+
+
+<div class="row">
+<div class="col-md-12"id="RS">
+</div>
+</div>
+
+<div>
+<h2>Top Content - Anomaly Heatmap <code>(Weighted Linear + RF Model)</code></h2>
+</div>
+<div class="rowx">
+<div class="col-md-12"id="HM">
+</div>
+</div>
+
+<h2>Anomalous Page Summary</h2>
+
+<div class="rowz">
+<div class="col-md-12"id="Tab1">
+<div class="table-responsive" id="Tab">
+<!-- <table class="table table-hover"> -->
+
+<!-- </table> -->
+</div><!-- /example -->
+</div>
+<div class="col-md-12"id="DAYTS">
+</div>
+
+</div>
+
+
+<hr>
+<footer>
+<p class="pull-right"><a href="#">Back to top</a></p>
+<p>D.Collins GDS 2014</p>
+</footer>
+
+
+<script src="http://d3js.org/d3.v3.js"></script>
+<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+<script src="static/js/d3.tip.v0.6.3.js"></script>
+<script src="static/js/bootstrap.js"></script>
+<script src="static/js/dropdowns-enhancement.js"></script>
+<script src="static/js/dropdowns-enhancement.min.js"></script>
+<script src="static/js/browser.js"></script>
+
+
+<script>
+
+b = []
+b[0] = 0
+
+T = {{DAT|safe}}
+TLR = {{DATLR|safe}}
+Heatx = {{HEAT|safe}}
+TNN = {{DATNN|safe}}
+TAB = {{TABLE|safe}}
+DAYP = {{DAYP|safe}}
+
+// TLR = TNN
+
+DT = []
+DT[0] = T
+$('.btn-group .btn').on('click', function() {
+    parentID = $(this).attr('id');
+    if (parentID =='TD')
+    	{b.push(114)
+    	console.log('2 days')
+    	d3.selectAll('svg').remove()
+    	if (d3.select('#RF').attr('class')=='btn btn-default navbar-btn active')
+    	{DT[0] = T}
+    	else if (d3.select('#NN').attr('class')=='btn btn-default navbar-btn active')
+    	{DT[0] = TNN}
+    	else
+    	{DT[0] = TLR}
+    	draw()
+    	
+    	}
+    else if (parentID =='SD')
+    	{b.push(0)
+    	d3.selectAll('svg').remove()
+    	if (d3.select('#RF').attr('class')=='btn btn-default navbar-btn active')
+    	{DT[0] = T}
+    	else if (d3.select('#NN').attr('class')=='btn btn-default navbar-btn active')
+    	{DT[0] = TNN}
+    	else
+    	{DT[0] = TLR}
+    	
+    	draw()
+    	}
+
+    else if (parentID == 'NN')
+    	{DT.push(TNN)
+    	d3.selectAll('svg').remove()
+    	if (d3.select('#TD').attr('class')=='btn btn-default navbar-btn active')
+    	{b[0] = 114}
+    	else
+    	{b[0] = 0}
+    	
+    	draw()
+    	}
+    else if (parentID =='RF')
+    	{DT.push(T)
+    	d3.selectAll('svg').remove()
+    	if (d3.select('#SD').attr('class')=='btn btn-default navbar-btn active')
+    	{b[0] = 0}
+    	else
+    	{b[0] = 114}
+    	
+    	draw()
+    
+    	}
+    else if (parentID =='LR')
+    	{DT.push(TLR)
+    	d3.selectAll('svg').remove()
+    	if (d3.select('#SD').attr('class')=='btn btn-default navbar-btn active')
+    	{b[0] = 0}
+    	else
+    	{b[0] = 114}
+    	
+    	draw()
+    
+    	}	
+    	
+    	
+    	
+    	})
+
+      tipHM = d3.tip()
+			  .attr('class', 'd3-tip')
+			  .attr('id', 'THM')
+			  .offset([-135, 0])
+			  .html(function (d) { return "<span style='color: #f0027g; font-size: 13px'>"  + "Page: " + d.page + "<br>" + "Time: " + d.time + "<br>" + "Value: " + d.value +"% of 3&#963" +"</span>"});
+		
+		
+
+draw()
+
+function myFunc() {
+// 			$('button.active').removeClass('active');
+			$(this).addClass('active')
+			console.log($('button.active').val($(this).text())[0].id)
+			if ($('button.active').val($(this).text())[0].id=="Tdays")
+				{
+				b.push(114)
+				console.log(b[0])
+				d3.selectAll('svg').remove()
+				draw()
+				$('button.active').removeClass('active')
+				}
+			else
+				{
+				b.push(0)
+				d3.selectAll('svg').remove()
+				draw()
+				$('button.active').removeClass('active')
+			}
+		}
+
+function draw() {
+
+
+	var margin = {top: 0, right: 20, bottom: 0, left: 81},
+		width = 995 - margin.left - margin.right,
+		height = 155 - margin.top - margin.bottom;
+
+
+	var margin2 = {top: 0, right: 15, bottom: 0, left: 81},
+		width2 = 995 - margin.left - margin.right,
+		height2 = 155 - margin.top - margin.bottom;
+
+
+// 	var parseDate = d3.time.format("%d/%m/%Y %H:%M").parse;
+	var parseDate = d3.time.format("%Y-%m-%d %H:%M").parse;
+
+
+
+	var x = d3.time.scale()
+		.range([0, width]);
+
+	var y = d3.scale.linear()
+		.range([height, 0]);
+
+	var x2 = d3.time.scale()
+		.range([0, width2]);
+
+	var y2 = d3.scale.linear()
+		.range([height2, 0]);
+
+	var color = d3.scale.category10();
+
+	var xAxis = d3.svg.axis()
+		.scale(x)
+		.orient("bottom")
+		.ticks(7)
+	// 	.tickFormat();
+
+	var yAxis = d3.svg.axis()
+		.scale(y)
+		.orient("left")
+		.ticks(7);
+
+
+	var yAxis2 = d3.svg.axis()
+		.scale(y2)
+		.orient("left")
+		.ticks(7);
+
+
+	function make_x_axis() {        
+		return d3.svg.axis()
+			.scale(x)
+			 .orient("bottom")
+			 .ticks(8)
+	}
+
+	function make_y_axis() {        
+		return d3.svg.axis()
+			.scale(y)
+			.orient("left")
+			.ticks(8)
+	}
+
+	function make_y_axis2() {        
+		return d3.svg.axis()
+			.scale(y2)
+			.orient("left")
+			.ticks(8)
+	}
+
+	var line = d3.svg.line()
+		.interpolate("cardinal")
+		.x(function(d) { return x(d.date); })
+		.y(function(d) { return y(d.actual); });
+
+	var line2 = d3.svg.line()
+		.interpolate("cardinal")
+		.x(function(d) { return x(d.date); })
+		.y(function(d) { return y2(d.resid); });
+
+	var line3 = d3.svg.line()
+		.interpolate("cardinal")
+		.x(function(d) { return x(d.date); })
+		.y(function(d) { return y2(d.TSDL); });
+
+	var line4 = d3.svg.line()
+		.interpolate("cardinal")
+		.x(function(d) { return x(d.date); })
+		.y(function(d) { return y2(d.TSDU); });
+
+	var Tformat = d3.format("0,000");
+
+	var tip = d3.tip()
+			  .attr('class', 'd3-tip')
+			  .offset([-10, 0])
+			  .html(function (d) { return "<span style='color: #f0027g; font-size: 13px'>"  + d.date + "<br>" +"<span style='color: #d62728'>" + "Predicted: " + Tformat(Math.round(d.pred)) + "<br>"+"<span style='color: steelblue'>"+ "Actual: " + Tformat(d.actual)+"</span>"});
+		
+	
+
+	com = function (x, L, U) {if (x < 0 && x < L) {return color(9)}
+						else if (x > 0 && x > U) {return color(9)}
+						else {return color(3)}
+						}
+
+
+
+	var svg = d3.select("#TS").append("svg")
+
+		   .attr("viewBox", "23 -25 " + (width + 120 ) + " " + (height+70) )
+	//     .attr("viewBox", "20 -20 " + (width + 90) + " " + (height+30) )
+
+ .attr("preserveAspectRatio", "xMidYMid meet")
+// 		.attr("preserveAspectRatio", "xMinYMin meet")
+	  .append("g")
+		.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+	var svg2 = d3.select("#RS").append("svg")
+
+		.attr("viewBox", "23 -25 " + (width2 + 120) + " " + (height2+70) )
+ .attr("preserveAspectRatio", "xMidYMid meet")
+// 		.attr("preserveAspectRatio", "xMinYMin meet")
+	  .append("g")
+		.attr("transform", "translate(" + margin2.left + "," + margin2.top + ")");
+
+//####################################################################################
+// Data for Top two charts -  1) timeseries with forecast values and  2) residual plot 
+	  
+// 	  data = T
+	  
+// 	  b[0] = 0
+	  data = DT.pop()
+	  
+	  lim = b.pop()
+	  
+	  data = data.filter(function(d,i) { return i > lim })
+
+	  color.domain([0,1,2,3,4,5,6,7,8,9,10])
+  
+  
+	  console.log(data[0])
+ 
+  
+	  data.forEach(function(d) {
+		d.date = parseDate(d.time)
+		d.actual = +d.yt
+		d.pred = +d.pred;
+		d.resid = +d.resid;
+		d.TSDL = +d.TSDL;
+		d.TSDU = +d.TSDU;
+	  });
+
+	  a = []
+	  a.push(data)
+	  console.log(color(3))
+  
+	//   ########################################################
+  
+	  x.domain(d3.extent(data, function(d) {return d.date; }));
+
+	  y.domain(d3.extent(data, function(d) {return d.actual; }));
+
+
+	  x2.domain(d3.extent(data, function(d)  {return d.date; }));
+	  y2.domain(d3.extent(data, function(d) {return d.resid; }));
+  
+
+	//   ########################################################
+	
+	// LEGEND 1 ///////////////////////////////////////////////////
+	
+	var legend = svg.selectAll('g')
+      .data(['Actual', 'Model'])
+      .enter()
+    .append('g')
+      .attr('class', 'legend');
+    
+    cols = ["steelblue",color(3)]  
+    
+    legend.append('rect')
+      .attr('x', width + 10)
+      .attr('y', function(d, i){ return i *  20;})
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', function(d,i) { 
+        return cols[i];
+      });
+      
+  legend.append('text')
+      .attr('x', width + 23)
+      .attr('y', function(d, i){ return (i *  20) + 9;})
+      .text(function(d){ return d; });
+  
+    var legend2 = svg2.selectAll('g')
+      .data(['Resid.', '3 S.D.'])
+      .enter()
+    .append('g')
+      .attr('class', 'legend');
+    
+    cols = ["steelblue",color(3)]  
+    
+    legend2.append('rect')
+      .attr('x', width2 + 2)
+      .attr('y', function(d, i){ return i *  20;})
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', function(d,i) { 
+        return cols[i];
+      });
+      
+  legend2.append('text')
+      .attr('x', width2 + 15)
+      .attr('y', function(d, i){ return (i *  20) + 9;})
+      .text(function(d){ return d; });	
+	
+	
+	
+	
+	
+	
+	
+	
+	// CHART1 #########################
+  
+	  svg.append("g")
+		  .attr("class", "x axis")
+		  .attr("transform", "translate(0," + height + ")")
+		  .call(xAxis);
+
+	  svg.append("g")
+		  .attr("class", "y axis")
+		  .call(yAxis)
+		.append("text")
+		  .attr("transform", "rotate(0)")
+	//       .attr("font-size", '11px')
+		  .attr("y", -1)
+		  .attr("dx", "-0.5em")
+		  .attr("dy", "-.7em")
+		  .style("text-anchor", "end")
+		  .style("font-weight", "bold")
+		  .text("Pageviews");
+
+
+	svg.append("g")         
+			.attr("class", "grid")
+			.attr("transform", "translate(0," + height + ")")
+			.call(make_x_axis()
+				.tickSize(-height, 0, 0)
+				.tickFormat("")
+			)
+
+		svg.append("g")         
+			.attr("class", "grid")
+			.call(make_y_axis()
+				.tickSize(-width, 0, 0)
+				.tickFormat("")
+			)
+  
+  
+	var city = svg.selectAll(".dot")
+		.data(data)
+		.enter().append("circle")
+			// .filter(function(d,i) { return i < 20 })
+
+			.attr("class", "dot")
+			.attr("r", 5)
+			.attr("cx", function(d) {return x(d.date)})
+			.attr("cy", function(d) {return y(d.pred)})
+// 			.style("stroke", function(d)  {if (Math.abs(d.pred-d.actual) < d.TSDU) {return color(3)} else {return color(9)}})
+// 			.style("fill", function(d) {if (Math.abs(d.pred-d.actual) < d.TSDU) {return color(3)} else {return color(9)}})
+			
+			.style("stroke", function(d)  {return com(d.resid, d.TSDL, d.TSDU) })
+			.style("fill", function(d)  {return com(d.resid, d.TSDL, d.TSDU)})
+			
+			.style("opacity", 0.7)
+ 		
+ 		
+ 		.call(tip)
+ 		.on('mouseover', tip.show)
+        .on('mouseout', tip.hide);
+ 
+ 
+	  svg.append("path")
+		  .attr("class", "line")
+		  .attr("d", function(d) { return line(data); })
+
+	// ##################################################### 
+
+	// CHART2 #########################
+
+
+	  svg2.append("g")
+		  .attr("class", "x axis")
+		  .attr("transform", "translate(0," + height2 + ")")
+		  .call(xAxis);
+
+	  svg2.append("g")
+		  .attr("class", "y axis")
+		  .call(yAxis2)
+		.append("text")
+		  .attr("transform", "rotate(0)")
+		  .attr("y", -1)
+		  .attr("dx", "-0.5em")
+		  .attr("dy", "-.9em")
+		  .style("text-anchor", "end")
+		  .style("font-weight", "bold")
+		  .text("Residuals");
+
+
+	svg2.append("g")         
+			.attr("class", "grid")
+			.attr("transform", "translate(0," + height2 + ")")
+			.call(make_x_axis()
+				.tickSize(-height, 0, 0)
+				.tickFormat("")
+			)
+
+	svg2.append("g")         
+			.attr("class", "grid")
+			.call(make_y_axis2()
+				.tickSize(-width, 0, 0)
+				.tickFormat("")
+			)
+  
+   
+	  svg2.append("path")
+		  .attr("class", "line")
+		  .attr("d", function(d) { return line2(data); })
+
+	  svg2.append("path")
+		  .attr("class", "line")
+		  .attr("d", function(d) { return line3(data); })
+		  .style("stroke", "red")
+		  .style("opacity", 0.7)
+
+
+	 svg2.append("path")
+		  .attr("class", "line")
+		  .attr("d", function(d) { return line4(data); })
+		  .style("stroke", "red")
+		  .style("opacity", 0.7)
+
+
+	
+	 b = []
+
+// ##########################################################################
+
+// HEATMAP TEST
+
+// if (/chrome/i.test( navigator.userAgent ) == true) {H2 = 760}
+// else {H2 = height}
+
+if (get_browser() == "Safari") {H2 = height; H3 = 10}
+else {H2 = 760; H3 = -20}
+
+
+red = []
+pag = []
+
+//  d3.csv("static/data/Heat.csv", function(error, data) {
+ 		
+ 		data = Heatx
+ 		
+ 		red.push(data)
+ 		var format2 = d3.time.format("%Y-%m-%d %H:%M").parse;
+ 		format3 = d3.time.format("%a-%H")
+ 		
+ 		tim = []
+ 		
+ 		data.forEach(function(d) {
+ 			tim.push(format3(format2(d.time)))
+ 			d.value = Math.round(+d.value)
+ 			pag.push(d.page)
+ 			
+ 			})	
+ 			
+ 		 var marginx = { top: 60, right: 10, bottom: 50, left: 420 },
+          width = 1090 - marginx.left - marginx.right,
+          height = 470 - marginx.top - marginx.bottom,
+          gridSize = Math.floor(width / 26),
+          gridSizey = Math.floor(width / 50)
+//           legendElementWidth = gridSize*2,          
+//           colors = ['#005824','#1A693B','#347B53','#4F8D6B','#699F83','#83B09B','#9EC2B3','#B8D4CB','#D2E6E3','#EDF8FB','#FFFFFF','#F1EEF6','#E6D3E1','#DBB9CD','#D19EB9','#C684A4','#BB6990','#B14F7C','#A63467','#9B1A53','#91003F'];
+          colors = ['#005824','#1A693B', '#83B09B','#9EC2B3','#B8D4CB','#D2E6E3','#ffffbf', '#fee08b','#fdae61','#fc8d59','#d73027']
+          
+          buckets = colors.length
+          legendElementWidth = gridSize*(25/buckets)
+
+          
+ 		  page = pag.filter(function(itm,i,pag){
+    				return i==pag.indexOf(itm);
+				});
+ 		  times = tim.slice(0,25)
+ 		
+ 		
+ 		var colorScale = d3.scale.quantile()
+              .domain([0, buckets - 1, d3.max(data, function (d) { return d.value; })])
+              .range(colors);
+
+		var svg = d3.select("#HM").append("svg")
+// 			  .attr("viewBox", "78 0 " + (width+330) + " " + (height) )
+			  .attr("viewBox", "78 0 " + (width+330) + " " + (H2) )
+
+
+//  			  .attr("preserveAspectRatio", "xMidYMid meet")
+			  .attr("preserveAspectRatio", "xMinYMin meet")
+//               .attr("width", width + marginx.left + marginx.right)
+//               .attr("height", height + marginx.top + marginx.bottom)
+              .append("g")
+              .attr("transform", "translate(" + marginx.left + "," + marginx.top + ")");
+
+
+		var pageLabels = svg.append("g")
+			  .selectAll(".pageLabel")
+              .data(page)
+              .enter().append("text")
+                .text(function (d) { return d; })
+                .attr("x", 0)
+                .attr("y", function (d, i) { return i * gridSizey; })
+                .style("text-anchor", "end")
+                .attr("transform", "translate(-6," + gridSizey / 1.5 + ")")
+//                 .attr("class", function (d, i) { return ((i >= 0 && i <= 4) ? "dayLabel mono axis axis-workweek" : "dayLabel mono axis"); });
+                .attr("class", "dayLabel mono axis axis-workweek")
+                .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      			.on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+
+
+		
+		
+		var timeLabels = svg.append("g") 
+		      .selectAll(".timeLabel")
+              .data(times)
+              .enter().append("text")
+                .text(function(d) { return d+'h'; })
+                .attr("y", function(d, i) { return i * gridSize; })
+                .attr("x", 0)
+                .style("text-anchor", "left")
+                .attr("transform", "translate(" + gridSize / 2 + ", -6) rotate (-90)")
+               
+//                 .attr("class", function(d, i) { return ((i >= 7 && i <= 16) ? "timeLabel mono axis axis-worktime" : "timeLabel mono axis"); })
+                .attr("class",  "timeLabel mono axis axis-worktime")
+                .on("mouseover", function(d) {d3.select(this).classed("text-hover",true);})
+      			.on("mouseout" , function(d) {d3.select(this).classed("text-hover",false);})
+
+
+		
+
+
+		var heatMap = svg.selectAll(".hour")
+              .data(data)
+              .enter().append("rect")
+              .attr("x", function(d) { return (d.TimeFCT ) * gridSize; })
+              .attr("y", function(d) { return (d.pageFCT) * gridSizey; })
+              .attr("rx", 0)
+              .attr("ry", 0)
+              .attr("class", "hour bordered")
+              .attr("width", gridSize)
+              .attr("height", gridSizey)
+              .style("fill", colors[0])
+              .style("opacity", function(d) {if (d.value>100) {return 0.99} else {return 0.45}})
+              .style("stroke", function(d) {if (d.value>100) {return colors[0]} else {return "None"}})
+              .style("stroke-width", function(d) {if (d.value>100) {return "2px"} else {return "None"}})
+              .call(tipHM)
+            
+ 			  .on('mouseover', tipHM.show)
+              .on('mouseout', tipHM.hide)
+     
+                 
+		heatMap.transition().duration(0)
+              .style("fill", function(d) { return colorScale(d.value); });
+              
+//         heatMap.append("title").text(function(d) { return d.value; });
+              
+          var legend = svg.selectAll(".legend")
+              .data([0].concat(colorScale.quantiles()), function(d) { return d; })
+              .enter().append("g")
+              .attr("class", "legend");
+
+          legend.append("rect")
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height + 300)
+            .attr("width", legendElementWidth)
+            .attr("height", gridSizey / 1.7)
+            .style("fill", function(d, i) { return colors[i]; });
+
+          legend.append("text")
+            .attr("class", "mono")
+            .text(function(d) { return "≥" + Math.round(d)+"%" ; })
+            .attr("x", function(d, i) { return legendElementWidth * i; })
+            .attr("y", height + 305 + gridSizey+5);
+
+// })
+
+// });  //line charts data csv read
+
+}
+
+// ########################## TABLE #####################################################
+
+		var columns = ["Page Name","Anomalous Time", "Actual Pageviews", "Predicted Pageviews", "% Delta (a-p)", "Plot"]
+		
+// 		var columns = ["page","time","actual","pred"]
+		
+		 
+		
+		TAB.forEach(function(d) {
+ 			d['Page Name'] = d.page
+ 			d['Anomalous Time'] = d.time
+ 			d['Actual Pageviews'] = +d.actual
+ 			d['Predicted Pageviews'] = Math.round(d.pred)
+ 			d['% Delta (a-p)'] = Math.round(100*(d.actual-d.pred)/(d.actual))+"%"
+//  			d['Plot'] = onclick='test();'d.page+"Series"
+ 			})	
+		
+		
+		tabl = d3.select("#Tab").append("table")
+		 						.attr("class", "table table-condensed table-striped")
+								.attr("background", "static/css/brushed_@2X.png")
+			
+			thead = tabl.append("thead")
+			tbody = tabl.append("tbody")
+			
+			thead.append("tr")
+				.selectAll("th")
+				.data(columns)
+				.enter()
+				.append("th")
+					.text(function(column) {return column});
+			
+			var rows = tbody.selectAll("tr")
+				.data(TAB)
+				.enter()
+				.append("tr")
+				
+			var cells = rows.selectAll("td")
+				.data(function(row) {
+					return columns.map(function(column) {
+						return {column: column, value: row[column]};
+						});
+					})
+					.enter()
+					.append("td")
+// 					.text(function(d,i) {return d.value})
+					.html(function(d,i) {if (d.column == "Plot") {return "<a onclick='test()'>Time Series</a>" }
+							else {return d.value}})
+			
+
+// ######################## CLICK TIME SERIES ############################
+
+GG = []
+
+function TSdraw(col) {
+
+	d3.select('#DAYS').remove()
+	
+	var margin = {top: 0, right: 20, bottom: 0, left: 81},
+			width = 995 - margin.left - margin.right,
+			height = 155 - margin.top - margin.bottom;
+
+
+	// 	var parseDate = d3.time.format("%d/%m/%Y %H:%M").parse;
+		var parseDate = d3.time.format("%Y-%m-%d %H:%M").parse;
+
+
+
+		var x = d3.time.scale()
+			.range([0, width]);
+
+		var y = d3.scale.linear()
+			.range([height, 0]);
+
+		var color = d3.scale.category10();
+
+		var xAxis = d3.svg.axis()
+			.scale(x)
+			.orient("bottom")
+			.ticks(7)
+		// 	.tickFormat();
+
+		var yAxis = d3.svg.axis()
+			.scale(y)
+			.orient("left")
+			.ticks(7);
+
+
+		function make_x_axis() {        
+			return d3.svg.axis()
+				.scale(x)
+				 .orient("bottom")
+				 .ticks(8)
+		}
+
+		function make_y_axis() {        
+			return d3.svg.axis()
+				.scale(y)
+				.orient("left")
+				.ticks(8)
+		}
+
+
+		var line = d3.svg.line()
+			.interpolate("cardinal")
+			.x(function(d) { return x(d.date); })
+			.y(function(d) { return y(d.actual); });
+
+
+		var Tformat = d3.format("0,000");
+
+
+
+		com = function (x, L, U) {if (x < 0 && x < L) {return color(9)}
+							else if (x > 0 && x > U) {return color(9)}
+							else {return color(3)}
+							}
+
+		var svg = d3.select("#DAYTS").append("svg")
+
+// need to change viewBox for chrome - change 10 to -20
+
+// 			   .attr("viewBox", "23 10 " + (width + 120 ) + " " + (height+70) )
+			   .attr("viewBox", "23 " + H3 + " " + (width + 120 ) + " " + (height+70) )
+
+			   .attr("id", "DAYS")
+			   .attr("preserveAspectRatio", "xMidYMid meet")
+		  .append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		color.domain([0,1,2,3,4,5,6,7,8,9,10])
+
+		data = DAYP
+		col2 = col+'_pred'
+		
+	
+		data.forEach(function(d) {
+			d.date = parseDate(d.Time)
+			d.actual = +d[col]
+		    d.pred = +d[col2];
+			
+		  });
+		GG.push(data) 
+	
+	
+		var tipTS = d3.tip()
+			  .attr('class', 'd3-tip')
+			  .offset([-120, 0])
+			  .html(function (d) { return "<span style='color: #f0027g; font-size: 13px'>"  + d.date + "<br>" +"<span style='color: #d62728'>" + "Predicted: " + Tformat(Math.round(d.pred)) + "<br>"+"<span style='color: steelblue'>"+ "Actual: " + Tformat(d.actual)+"</span>"});
+		
+		
+		  
+	//   ########################################################
+  
+	  x.domain(d3.extent(data, function(d) {return d.date; }));
+
+	  y.domain(d3.extent(data, function(d) {return d.actual; }));
+
+	//   ########################################################
+	
+	// LEGEND 1 ///////////////////////////////////////////////////
+	
+	var legend = svg.selectAll('g')
+      .data(['Actual', 'Model'])
+      .enter()
+    .append('g')
+      .attr('class', 'legend');
+    
+    cols = ["steelblue",color(3)]  
+    
+    legend.append('rect')
+      .attr('x', width + 10)
+      .attr('y', function(d, i){ return i *  20;})
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', function(d,i) { 
+        return cols[i];
+      });
+      
+  legend.append('text')
+      .attr('x', width + 23)
+      .attr('y', function(d, i){ return (i *  20) + 9;})
+      .text(function(d){ return d; });
+  	
+	// CHART1 #########################
+  
+	  svg.append("g")
+		  .attr("class", "x axis")
+		  .attr("transform", "translate(0," + height + ")")
+		  .call(xAxis);
+
+	  svg.append("g")
+		  .attr("class", "y axis")
+		  .call(yAxis)
+		.append("text")
+		  .attr("transform", "rotate(0)")
+	//       .attr("font-size", '11px')
+		  .attr("y", -1)
+		  .attr("dx", "-0.5em")
+		  .attr("dy", "-.7em")
+		  .style("text-anchor", "end")
+		  .style("font-weight", "bold")
+		  .text("Pageviews");
+
+
+	svg.append("g")         
+			.attr("class", "grid")
+			.attr("transform", "translate(0," + height + ")")
+			.call(make_x_axis()
+				.tickSize(-height, 0, 0)
+				.tickFormat("")
+			)
+
+		svg.append("g")         
+			.attr("class", "grid")
+			.call(make_y_axis()
+				.tickSize(-width, 0, 0)
+				.tickFormat("")
+			)
+  
+  
+	var cityX = svg.selectAll(".dot")
+		.data(data)
+		.enter().append("circle")
+			// .filter(function(d,i) { return i < 20 })
+
+			.attr("class", "dot")
+			.attr("r", 5)
+			.attr("cx", function(d) {return x(d.date)})
+			.attr("cy", function(d) {return y(d.pred)})
+			
+			.style("stroke", color(3))
+			.style("fill", color(3))
+				
+		// 	.style("stroke", function(d)  {return com(d.resid, d.TSDL, d.TSDU) })
+// 			.style("fill", function(d)  {return com(d.resid, d.TSDL, d.TSDU)})
+// 			
+			.style("opacity", 0.7)
+ 		
+ 		
+ 		.call(tipTS)
+ 		.on('mouseover', tipTS.show)
+        .on('mouseout', tipTS.hide);
+ 
+ 
+	  svg.append("path")
+		  .attr("class", "line")
+		  .attr("d", function(d) { return line(data); })
+	
+	  svg.append("text")
+        .attr("x", (width / 2))             
+        .attr("y", 0 - (margin.top / 2))
+        .attr("text-anchor", "middle")  
+        .style("font-size", "16px") 
+//         .style("text-decoration", "underline")  
+        .text(col);
+
+	// ##################################################### 
+		
+		
+		
+
+}
+
+
+// This needs to be fixed for firefox
+
+var table = document.getElementsByTagName("table")[0];
+var tbody = table.getElementsByTagName("tbody")[0];
+var dataTab = [];
+test = function (e) {
+    e = e || window.event;
+//     var dataTab = [];
+    var target = e.srcElement || e.target;
+    while (target && target.nodeName !== "TR") {
+        target = target.parentNode;
+    }
+    if (target) {
+        var cells = target.getElementsByTagName("td");
+        for (var i = 0; i < 1; i++) {
+            dataTab.push(cells[0].innerHTML);
+        }
+    };
+
+
+TSdraw(dataTab.pop())
+
+
+
+
+
+
+
+};
+
+
+
+
+
+
+
+
+
+</script>
